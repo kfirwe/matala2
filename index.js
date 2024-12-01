@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const userRoutes = require("./routes/userRoutes");
-const authMiddleware = require("./middleware/authMiddleware");
+const authMiddleware = require("./middlewares/authMiddleware");
 require("dotenv").config();
 
 const app = express();

@@ -1,10 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
+const Comment = require("../models/Comment");
+const User = require("../models/User");
 
 // Add a New Post
 router.post("/", async (req, res) => {
+  const { sender } = req.body;
+
   try {
+    // Check if the user exists
+    const user = await User.findById(sender);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Create the post
     const post = await Post.create(req.body);
     res.status(201).json(post);
   } catch (err) {
@@ -63,7 +74,11 @@ router.delete("/:postId", async (req, res) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.postId);
     if (!post) return res.status(404).json({ error: "Post not found" });
-    res.json({ message: "Post deleted" });
+
+    // Delete the comments associated with the post
+    await Comment.deleteMany({ postId: req.params.postId });
+
+    res.json({ message: "Post and associated comments deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

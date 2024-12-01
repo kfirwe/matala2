@@ -1,10 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const Comment = require("../models/Comment");
+const Post = require("../models/Post");
+const User = require("../models/User");
 
 // Create a Comment
 router.post("/", async (req, res) => {
+  const { postId, sender } = req.body;
+
   try {
+    // Check if the post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Check if the user exists
+    const user = await User.findById(sender);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Create the comment
     const comment = await Comment.create(req.body);
     res.status(201).json(comment);
   } catch (err) {

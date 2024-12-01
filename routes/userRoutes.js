@@ -1,6 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const Post = require("../models/Post");
+const Comment = require("../models/Comment");
 const User = require("../models/User");
+const { body, validationResult } = require("express-validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 // Register a User
 router.post(
@@ -34,15 +40,7 @@ router.post(
 
       await user.save();
 
-      const payload = { userId: user.id };
-      const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "15m",
-      });
-      const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-        expiresIn: "7d",
-      });
-
-      res.status(201).json({ accessToken, refreshToken });
+      res.status(201).json({ message: "User registered successfully" });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -98,13 +96,18 @@ router.post("/logout", (req, res) => {
 
 // Refresh Token
 router.post("/token", async (req, res) => {
-  const { token } = req.body;
-  if (!token) {
+  const { refresh_token } = req.body;
+  if (!refresh_token) {
     return res.status(401).json({ error: "Token is required" });
   }
 
+  // Log the token for debugging purposes
+  console.log("Received token:", refresh_token);
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const payload = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET);
+    console.log("Token payload:", payload); // Log the payload for debugging
+
     const accessToken = jwt.sign(
       { userId: payload.userId },
       process.env.JWT_SECRET,
@@ -112,22 +115,13 @@ router.post("/token", async (req, res) => {
     );
     res.json({ accessToken });
   } catch (err) {
+    console.error("Token verification error:", err); // Log the error for debugging
     res.status(403).json({ error: "Invalid token" });
   }
 });
 
-// Create a User, used for administrative purposes to create users without going through the full registration process.
-router.post("/", async (req, res) => {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
 // Get All Users
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -137,7 +131,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get a User by ID
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -148,11 +142,19 @@ router.get("/:userId", async (req, res) => {
 });
 
 // Update a User
-router.put("/:userId", async (req, res) => {
+router.put("/:userId", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.userId, req.body, {
+    const { password, ...otherDetails } = req.body;
+
+    if (password) {
+      // Check if the password is already hashed
+      otherDetails.password = await bcrypt.hash(password, 10);
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.userId, otherDetails, {
       new: true,
     });
+
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (err) {
@@ -161,11 +163,21 @@ router.put("/:userId", async (req, res) => {
 });
 
 // Delete a User
-router.delete("/:userId", async (req, res) => {
+router.delete("/:userId", authMiddleware, async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ message: "User deleted" });
+
+    // Delete the posts associated with the user
+    const posts = await Post.find({ sender: req.params.userId });
+    const postIds = posts.map((post) => post._id);
+
+    await Post.deleteMany({ sender: req.params.userId });
+
+    // Delete the comments associated with the user's posts
+    await Comment.deleteMany({ postId: { $in: postIds } });
+
+    res.json({ message: "User, associated posts, and comments deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
