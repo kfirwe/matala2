@@ -6,7 +6,10 @@ const User = require("../models/User");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const authMiddleware = require("../middlewares/authMiddleware");
+const {
+  authMiddleware,
+  refreshTokenMiddleware,
+} = require("../middlewares/authMiddleware");
 
 // Register a User
 router.post(
@@ -121,7 +124,7 @@ router.post("/token", async (req, res) => {
 });
 
 // Get All Users
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, refreshTokenMiddleware, async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -131,56 +134,75 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 // Get a User by ID
-router.get("/:userId", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.get(
+  "/:userId",
+  authMiddleware,
+  refreshTokenMiddleware,
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json(user);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 // Update a User
-router.put("/:userId", authMiddleware, async (req, res) => {
-  try {
-    const { password, ...otherDetails } = req.body;
+router.put(
+  "/:userId",
+  authMiddleware,
+  refreshTokenMiddleware,
+  async (req, res) => {
+    try {
+      const { password, ...otherDetails } = req.body;
 
-    if (password) {
-      // Check if the password is already hashed
-      otherDetails.password = await bcrypt.hash(password, 10);
+      if (password) {
+        // Check if the password is already hashed
+        otherDetails.password = await bcrypt.hash(password, 10);
+      }
+
+      const user = await User.findByIdAndUpdate(
+        req.params.userId,
+        otherDetails,
+        {
+          new: true,
+        }
+      );
+
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json(user);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
     }
-
-    const user = await User.findByIdAndUpdate(req.params.userId, otherDetails, {
-      new: true,
-    });
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
-});
+);
 
 // Delete a User
-router.delete("/:userId", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
+router.delete(
+  "/:userId",
+  authMiddleware,
+  refreshTokenMiddleware,
+  async (req, res) => {
+    try {
+      const user = await User.findByIdAndDelete(req.params.userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Delete the posts associated with the user
-    const posts = await Post.find({ sender: req.params.userId });
-    const postIds = posts.map((post) => post._id);
+      // Delete the posts associated with the user
+      const posts = await Post.find({ sender: req.params.userId });
+      const postIds = posts.map((post) => post._id);
 
-    await Post.deleteMany({ sender: req.params.userId });
+      await Post.deleteMany({ sender: req.params.userId });
 
-    // Delete the comments associated with the user's posts
-    await Comment.deleteMany({ postId: { $in: postIds } });
+      // Delete the comments associated with the user's posts
+      await Comment.deleteMany({ postId: { $in: postIds } });
 
-    res.json({ message: "User, associated posts, and comments deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+      res.json({ message: "User, associated posts, and comments deleted" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 module.exports = router;

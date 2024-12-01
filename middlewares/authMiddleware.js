@@ -27,4 +27,46 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+const refreshTokenMiddleware = (req, res, next) => {
+  const authHeader = req.header("Authorization");
+  if (!authHeader) {
+    return res.status(401).json({ error: "No token, authorization denied" });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  if (!token) {
+    return res.status(401).json({ error: "No token, authorization denied" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      ignoreExpiration: true,
+    });
+    const now = Math.floor(Date.now() / 1000);
+
+    // Check if the token is about to expire (e.g., within 5 minutes)
+    if (decoded.exp - now < 300) {
+      const newAccessToken = jwt.sign(
+        { userId: decoded.userId },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+
+      const newRefreshToken = jwt.sign(
+        { userId: decoded.userId },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      res.setHeader("Authorization", `Bearer ${newAccessToken}`);
+      res.setHeader("Refresh-Token", newRefreshToken);
+    }
+
+    req.user = decoded.userId;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Token is not valid" });
+  }
+};
+
+module.exports = { authMiddleware, refreshTokenMiddleware };

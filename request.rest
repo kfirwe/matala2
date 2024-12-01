@@ -30,11 +30,11 @@ Content-Type: application/json
 
 ### Get All Users
 GET http://localhost:3000/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzRjYzEwODRjNGVjYTU5OTg5OTJjNzMiLCJpYXQiOjE3MzMwODM0MjcsImV4cCI6MTczMzA4NDMyN30.uvvjAg0JUpKd5rNuBkSx9BYn3-UtQhOS2XgV6PgGqNE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzRjYzI4NTE2YTliOThkNjY2ODdhY2MiLCJpYXQiOjE3MzMwODQ1MjUsImV4cCI6MTczMzA4NTQyNX0.YvilKQ01EbdREzluJDflC9QnVe_5_WWWkpxXf72cEaw
 
 ### Get a User by ID
-GET http://localhost:3000/users/674cc1554c4eca5998992c7c
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzRjYzEwODRjNGVjYTU5OTg5OTJjNzMiLCJpYXQiOjE3MzMwODM0MjcsImV4cCI6MTczMzA4NDMyN30.uvvjAg0JUpKd5rNuBkSx9BYn3-UtQhOS2XgV6PgGqNE
+GET http://localhost:3000/users/674cc28516a9b98d66687acc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzRjYzI4NTE2YTliOThkNjY2ODdhY2MiLCJpYXQiOjE3MzMwODQ1MjUsImV4cCI6MTczMzA4NTQyNX0.YvilKQ01EbdREzluJDflC9QnVe_5_WWWkpxXf72cEaw
 
 ### Update a User
 PUT http://localhost:3000/users/674cc1554c4eca5998992c7c

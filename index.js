@@ -6,7 +6,10 @@ const bodyParser = require("body-parser");
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const userRoutes = require("./routes/userRoutes");
-const authMiddleware = require("./middlewares/authMiddleware");
+const {
+  authMiddleware,
+  refreshTokenMiddleware,
+} = require("./middlewares/authMiddleware");
 require("dotenv").config();
 
 const app = express();
@@ -25,8 +28,8 @@ mongoose
   .catch((err) => console.error(err));
 
 // Routes
-app.use("/posts", authMiddleware, postRoutes);
-app.use("/comments", authMiddleware, commentRoutes);
+app.use("/posts", authMiddleware, refreshTokenMiddleware, postRoutes);
+app.use("/comments", authMiddleware, refreshTokenMiddleware, commentRoutes);
 app.use("/users", userRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
