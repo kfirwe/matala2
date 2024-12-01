@@ -1,3 +1,67 @@
+### Register a New User
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+    "username": "user123",
+    "email": "user123@example.com",
+    "password": "securepassword"
+}
+
+### Login a User
+POST http://localhost:3000/users/login
+Content-Type: application/json
+
+{
+    "email": "user123@example.com",
+    "password": "securepassword"
+}
+
+### Logout a User
+POST http://localhost:3000/users/logout
+
+### Refresh Token
+POST http://localhost:3000/users/token
+Content-Type: application/json
+
+{
+    "token": "REFRESH_TOKEN"
+}
+
+### Add a New User (Admin Use)
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "username": "user123",
+    "email": "user123@example.com",
+    "password": "securepassword",
+    "firstName": "John",
+    "lastName": "Doe",
+    "bio": "Software developer"
+}
+
+### Get All Users
+GET http://localhost:3000/users
+
+### Get a User by ID
+GET http://localhost:3000/users/USER_ID
+
+### Update a User
+PUT http://localhost:3000/users/USER_ID
+Content-Type: application/json
+
+{
+    "username": "updatedUser123",
+    "email": "updateduser123@example.com",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "bio": "Updated bio"
+}
+
+### Delete a User
+DELETE http://localhost:3000/users/USER_ID
+
 ### Add a New Post
 POST http://localhost:3000/posts
 Content-Type: application/json
@@ -5,45 +69,48 @@ Content-Type: application/json
 {
     "title": "My First Post",
     "content": "This is the content of my first post",
-    "sender": "user123"
+    "sender": "USER_ID"
 }
 
 ### Get All Posts
 GET http://localhost:3000/posts
 
 ### Get a Post by ID
-GET http://localhost:3000/posts/6737533d3a7731255c1879ad
+GET http://localhost:3000/posts/POST_ID
 
 ### Get Posts by Sender
-GET http://localhost:3000/posts/sender/user123
+GET http://localhost:3000/posts/sender/USER_ID
 
 ### Update a Post
-PUT http://localhost:3000/posts/6737533d3a7731255c1879ad
+PUT http://localhost:3000/posts/POST_ID
 Content-Type: application/json
 
 {
-    "title": "Updated Post",
-    "content": "Updated content"
+    "title": "Updated Post Title",
+    "content": "Updated content of the post"
 }
+
+### Delete a Post
+DELETE http://localhost:3000/posts/POST_ID
 
 ### Add a New Comment
 POST http://localhost:3000/comments
 Content-Type: application/json
 
 {
-    "postId": "6737533d3a7731255c1879ad",
     "content": "This is a comment",
-    "author": "user456"
+    "sender": "USER_ID",
+    "postId": "POST_ID"
 }
 
 ### Get All Comments
 GET http://localhost:3000/comments
 
-### Get Comments by Post ID
-GET http://localhost:3000/comments/post/6737533d3a7731255c1879ad
+### Get a Comment by ID
+GET http://localhost:3000/comments/COMMENT_ID
 
 ### Update a Comment
-PUT http://localhost:3000/comments/6737557cbf254ed5d475b065
+PUT http://localhost:3000/comments/COMMENT_ID
 Content-Type: application/json
 
 {
@@ -51,4 +118,4 @@ Content-Type: application/json
 }
 
 ### Delete a Comment
-DELETE http://localhost:3000/comments/6737557cbf254ed5d475b065
+DELETE http://localhost:3000/comments/COMMENT_ID
