@@ -15,7 +15,7 @@ router.post("/", async (req, res) => {
 // Get All Posts
 router.get("/", async (req, res) => {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().populate("sender");
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -25,7 +25,7 @@ router.get("/", async (req, res) => {
 // Get a Post by ID
 router.get("/:postId", async (req, res) => {
   try {
-    const post = await Post.findById(req.params.postId);
+    const post = await Post.findById(req.params.postId).populate("sender");
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
   } catch (err) {
@@ -36,7 +36,9 @@ router.get("/:postId", async (req, res) => {
 // Get Posts by Sender
 router.get("/sender/:senderId", async (req, res) => {
   try {
-    const posts = await Post.find({ sender: req.params.senderId });
+    const posts = await Post.find({ sender: req.params.senderId }).populate(
+      "sender"
+    );
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -48,11 +50,22 @@ router.put("/:postId", async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(req.params.postId, req.body, {
       new: true,
-    });
+    }).populate("sender");
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a Post
+router.delete("/:postId", async (req, res) => {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.postId);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    res.json({ message: "Post deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

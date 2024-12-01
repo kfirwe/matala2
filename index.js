@@ -5,10 +5,12 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
+const userRoutes = require("./routes/userRoutes");
+const authMiddleware = require("./middleware/authMiddleware");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.DATABASE_PORT;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -23,7 +25,8 @@ mongoose
   .catch((err) => console.error(err));
 
 // Routes
-app.use("/posts", postRoutes);
-app.use("/comments", commentRoutes);
+app.use("/posts", authMiddleware, postRoutes);
+app.use("/comments", authMiddleware, commentRoutes);
+app.use("/users", userRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
