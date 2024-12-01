@@ -1,0 +1,54 @@
+### Add a New Post
+POST http://localhost:3000/posts
+Content-Type: application/json
+
+{
+    "title": "My First Post",
+    "content": "This is the content of my first post",
+    "sender": "user123"
+}
+
+### Get All Posts
+GET http://localhost:3000/posts
+
+### Get a Post by ID
+GET http://localhost:3000/posts/6737533d3a7731255c1879ad
+
+### Get Posts by Sender
+GET http://localhost:3000/posts/sender/user123
+
+### Update a Post
+PUT http://localhost:3000/posts/6737533d3a7731255c1879ad
+Content-Type: application/json
+
+{
+    "title": "Updated Post",
+    "content": "Updated content"
+}
+
+### Add a New Comment
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+    "postId": "6737533d3a7731255c1879ad",
+    "content": "This is a comment",
+    "author": "user456"
+}
+
+### Get All Comments
+GET http://localhost:3000/comments
+
+### Get Comments by Post ID
+GET http://localhost:3000/comments/post/6737533d3a7731255c1879ad
+
+### Update a Comment
+PUT http://localhost:3000/comments/6737557cbf254ed5d475b065
+Content-Type: application/json
+
+{
+    "content": "Updated comment content"
+}
+
+### Delete a Comment
+DELETE http://localhost:3000/comments/6737557cbf254ed5d475b065
