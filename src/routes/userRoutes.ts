@@ -1,15 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const Post = require("../models/Post");
-const Comment = require("../models/Comment");
-const User = require("../models/User");
-const { body, validationResult } = require("express-validator");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const {
+import express, { Request, Response } from "express";
+import Post from "../models/Post";
+import Comment from "../models/Comment";
+import User from "../models/User";
+import { body, validationResult } from "express-validator";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import {
   authMiddleware,
   refreshTokenMiddleware,
-} = require("../middlewares/authMiddleware");
+} from "../middlewares/authMiddleware";
+
+const router = express.Router();
 
 /**
  * @swagger
@@ -71,7 +72,7 @@ router.post(
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters long"),
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -95,7 +96,11 @@ router.post(
 
       res.status(201).json({ message: "User registered successfully" });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
     }
   }
 );
@@ -134,7 +139,7 @@ router.post(
     body("email").isEmail().withMessage("Valid email is required"),
     body("password").notEmpty().withMessage("Password is required"),
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -154,16 +159,33 @@ router.post(
       }
 
       const payload = { userId: user.id };
-      const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      if (!process.env.JWT_SECRET) {
+        throw new Error("JWT_SECRET is not defined");
+      }
+      if (!process.env.JWT_SECRET) {
+        throw new Error("JWT_SECRET is not defined");
+      }
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error("JWT_SECRET is not defined");
+      }
+      const accessToken = jwt.sign(payload, jwtSecret, {
         expiresIn: "15m",
       });
+      if (!process.env.JWT_REFRESH_SECRET) {
+        throw new Error("JWT_REFRESH_SECRET is not defined");
+      }
       const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
         expiresIn: "7d",
       });
 
       res.json({ accessToken, refreshToken });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
     }
   }
 );
@@ -178,7 +200,7 @@ router.post(
  *       200:
  *         description: User logged out successfully
  */
-router.post("/logout", (req, res) => {
+router.post("/logout", (req: Request, res: Response) => {
   // Invalidate the refresh token (implementation depends on your token storage strategy)
   res.json({ message: "Logged out successfully" });
 });
@@ -207,18 +229,24 @@ router.post("/logout", (req, res) => {
  *       403:
  *         description: Invalid token
  */
-router.post("/token", async (req, res) => {
+router.post("/token", async (req: Request, res: Response) => {
   const { refresh_token } = req.body;
   if (!refresh_token) {
     return res.status(401).json({ error: "Token is required" });
   }
 
-  // Log the token for debugging purposes
-  console.log("Received token:", refresh_token);
-
   try {
-    const payload = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET);
-    console.log("Token payload:", payload); // Log the payload for debugging
+    if (!process.env.JWT_REFRESH_SECRET) {
+      throw new Error("JWT_REFRESH_SECRET is not defined");
+    }
+    const payload = jwt.verify(
+      refresh_token,
+      process.env.JWT_REFRESH_SECRET
+    ) as jwt.JwtPayload;
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
 
     const accessToken = jwt.sign(
       { userId: payload.userId },
@@ -226,8 +254,7 @@ router.post("/token", async (req, res) => {
       { expiresIn: "15m" }
     );
     res.json({ accessToken });
-  } catch (err) {
-    console.error("Token verification error:", err); // Log the error for debugging
+  } catch {
     res.status(403).json({ error: "Invalid token" });
   }
 });
@@ -248,14 +275,23 @@ router.post("/token", async (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get("/", authMiddleware, refreshTokenMiddleware, async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.get(
+  "/",
+  authMiddleware,
+  refreshTokenMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const users = await User.find();
+      res.json(users);
+    } catch (err) {
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -284,14 +320,17 @@ router.get(
   "/:userId",
   authMiddleware,
   refreshTokenMiddleware,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const user = await User.findById(req.params.userId);
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json(user);
     } catch (err) {
-      console.error(err); // Fixed typo
-      res.status(500).json({ error: err.message });
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
     }
   }
 );
@@ -331,7 +370,7 @@ router.put(
   "/:userId",
   authMiddleware,
   refreshTokenMiddleware,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { password, ...otherDetails } = req.body;
 
@@ -351,7 +390,11 @@ router.put(
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json(user);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
     }
   }
 );
@@ -379,7 +422,7 @@ router.delete(
   "/:userId",
   authMiddleware,
   refreshTokenMiddleware,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const user = await User.findByIdAndDelete(req.params.userId);
       if (!user) return res.status(404).json({ error: "User not found" });
@@ -395,9 +438,13 @@ router.delete(
 
       res.json({ message: "User, associated posts, and comments deleted" });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      if (err instanceof Error) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "An unknown error occurred" });
+      }
     }
   }
 );
 
-module.exports = router;
+export default router;

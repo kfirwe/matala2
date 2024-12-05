@@ -1,8 +1,9 @@
-const express = require("express");
+import express, { Request, Response } from "express";
+import Post from "../models/Post";
+import Comment from "../models/Comment";
+import User from "../models/User";
+
 const router = express.Router();
-const Post = require("../models/Post");
-const Comment = require("../models/Comment");
-const User = require("../models/User");
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ const User = require("../models/User");
  *       404:
  *         description: User not found
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req: Request, res: Response) => {
   const { title, content, sender } = req.body;
 
   try {
@@ -77,7 +78,11 @@ router.post("/", async (req, res) => {
     await post.save();
     res.status(201).json(post);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -97,12 +102,16 @@ router.post("/", async (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Post'
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const posts = await Post.find().populate("sender");
-    res.json(posts);
+    res.json(posts); // Return the posts
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -129,13 +138,17 @@ router.get("/", async (req, res) => {
  *       404:
  *         description: Post not found
  */
-router.get("/:postId", async (req, res) => {
+router.get("/:postId", async (req: Request, res: Response) => {
   try {
     const post = await Post.findById(req.params.postId).populate("sender");
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -162,14 +175,18 @@ router.get("/:postId", async (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Post'
  */
-router.get("/sender/:senderId", async (req, res) => {
+router.get("/sender/:senderId", async (req: Request, res: Response) => {
   try {
     const posts = await Post.find({ sender: req.params.senderId }).populate(
       "sender"
     );
     res.json(posts);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -204,7 +221,7 @@ router.get("/sender/:senderId", async (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.put("/:postId", async (req, res) => {
+router.put("/:postId", async (req: Request, res: Response) => {
   try {
     const post = await Post.findByIdAndUpdate(req.params.postId, req.body, {
       new: true,
@@ -212,7 +229,11 @@ router.put("/:postId", async (req, res) => {
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -235,7 +256,7 @@ router.put("/:postId", async (req, res) => {
  *       404:
  *         description: Post not found
  */
-router.delete("/:postId", async (req, res) => {
+router.delete("/:postId", async (req: Request, res: Response) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.postId);
     if (!post) return res.status(404).json({ error: "Post not found" });
@@ -245,8 +266,12 @@ router.delete("/:postId", async (req, res) => {
 
     res.json({ message: "Post and associated comments deleted" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
-module.exports = router;
+export default router;

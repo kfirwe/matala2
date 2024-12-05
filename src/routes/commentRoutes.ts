@@ -1,8 +1,9 @@
-const express = require("express");
+import express, { Request, Response } from "express";
+import Comment from "../models/Comment";
+import Post from "../models/Post";
+import User from "../models/User";
+
 const router = express.Router();
-const Comment = require("../models/Comment");
-const Post = require("../models/Post");
-const User = require("../models/User");
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ const User = require("../models/User");
  *       400:
  *         description: Bad request
  */
-router.post("/", async (req, res) => {
+router.post("/", async (req: Request, res: Response) => {
   const { postId, sender } = req.body;
 
   try {
@@ -79,7 +80,11 @@ router.post("/", async (req, res) => {
     const comment = await Comment.create(req.body);
     res.status(201).json(comment);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(400).json({ error: err.message });
+    } else {
+      res.status(400).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -99,12 +104,16 @@ router.post("/", async (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Comment'
  */
-router.get("/", async (req, res) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const comments = await Comment.find().populate("sender").populate("postId");
     res.json(comments);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -131,7 +140,7 @@ router.get("/", async (req, res) => {
  *       404:
  *         description: The comment was not found
  */
-router.get("/:commentId", async (req, res) => {
+router.get("/:commentId", async (req: Request, res: Response) => {
   try {
     const comment = await Comment.findById(req.params.commentId)
       .populate("sender")
@@ -139,7 +148,11 @@ router.get("/:commentId", async (req, res) => {
     if (!comment) return res.status(404).json({ error: "Comment not found" });
     res.json(comment);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -174,9 +187,8 @@ router.get("/:commentId", async (req, res) => {
  *       400:
  *         description: Bad request
  */
-router.put("/:commentId", async (req, res) => {
+router.put("/:commentId", async (req: Request, res: Response) => {
   try {
-    console.log("Request body:", req.body); // Log the request body
     let comment = await Comment.findByIdAndUpdate(
       req.params.commentId,
       req.body,
@@ -192,8 +204,11 @@ router.put("/:commentId", async (req, res) => {
       .populate("postId");
     res.json(comment);
   } catch (err) {
-    console.log("Error in PUT /comments/:commentId:", err); // Log any errors
-    res.status(400).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
@@ -216,14 +231,18 @@ router.put("/:commentId", async (req, res) => {
  *       404:
  *         description: The comment was not found
  */
-router.delete("/:commentId", async (req, res) => {
+router.delete("/:commentId", async (req: Request, res: Response) => {
   try {
     const comment = await Comment.findByIdAndDelete(req.params.commentId);
     if (!comment) return res.status(404).json({ error: "Comment not found" });
     res.json({ message: "Comment deleted" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: "An unknown error occurred" });
+    }
   }
 });
 
-module.exports = router;
+export default router;
