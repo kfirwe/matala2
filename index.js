@@ -10,6 +10,8 @@ const {
   authMiddleware,
   refreshTokenMiddleware,
 } = require("./middlewares/authMiddleware");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpecs = require("./swaggerConfig");
 require("dotenv").config();
 
 const app = express();
@@ -27,9 +29,14 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error(err));
 
+// Swagger setup
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
 // Routes
 app.use("/posts", authMiddleware, refreshTokenMiddleware, postRoutes);
 app.use("/comments", authMiddleware, refreshTokenMiddleware, commentRoutes);
 app.use("/users", userRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

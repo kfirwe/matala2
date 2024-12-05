@@ -11,7 +11,57 @@ const {
   refreshTokenMiddleware,
 } = require("../middlewares/authMiddleware");
 
-// Register a User
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - username
+ *         - email
+ *         - password
+ *       properties:
+ *         username:
+ *           type: string
+ *           description: The user's username
+ *         email:
+ *           type: string
+ *           description: The user's email
+ *         password:
+ *           type: string
+ *           description: The user's password
+ *       example:
+ *         username: "testuser"
+ *         email: "test@example.com"
+ *         password: "password123"
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: The users managing API
+ */
+
+/**
+ * @swagger
+ * /users/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Bad request
+ */
 router.post(
   "/register",
   [
@@ -50,7 +100,34 @@ router.post(
   }
 );
 
-// Login a User
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: The user's email
+ *               password:
+ *                 type: string
+ *                 description: The user's password
+ *             example:
+ *               email: "test@example.com"
+ *               password: "password123"
+ *     responses:
+ *       200:
+ *         description: User logged in successfully
+ *       400:
+ *         description: Invalid credentials
+ */
 router.post(
   "/login",
   [
@@ -91,13 +168,45 @@ router.post(
   }
 );
 
-// Logout a User
+/**
+ * @swagger
+ * /users/logout:
+ *   post:
+ *     summary: Logout a user
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: User logged out successfully
+ */
 router.post("/logout", (req, res) => {
   // Invalidate the refresh token (implementation depends on your token storage strategy)
   res.json({ message: "Logged out successfully" });
 });
 
-// Refresh Token
+/**
+ * @swagger
+ * /users/token:
+ *   post:
+ *     summary: Refresh tokens
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *                 description: The refresh token
+ *             example:
+ *               refresh_token: "validRefreshToken"
+ *     responses:
+ *       200:
+ *         description: Tokens refreshed successfully
+ *       403:
+ *         description: Invalid token
+ */
 router.post("/token", async (req, res) => {
   const { refresh_token } = req.body;
   if (!refresh_token) {
@@ -123,7 +232,22 @@ router.post("/token", async (req, res) => {
   }
 });
 
-// Get All Users
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: The list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
 router.get("/", authMiddleware, refreshTokenMiddleware, async (req, res) => {
   try {
     const users = await User.find();
@@ -133,7 +257,29 @@ router.get("/", authMiddleware, refreshTokenMiddleware, async (req, res) => {
   }
 });
 
-// Get a User by ID
+/**
+ * @swagger
+ * /users/{userId}:
+ *   get:
+ *     summary: Get a user by ID
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     responses:
+ *       200:
+ *         description: The user description by ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found
+ */
 router.get(
   "/:userId",
   authMiddleware,
@@ -144,12 +290,43 @@ router.get(
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json(user);
     } catch (err) {
+      console.error(err); // Fixed typo
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-// Update a User
+/**
+ * @swagger
+ * /users/{userId}:
+ *   put:
+ *     summary: Update a user
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: The user was updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found
+ *       400:
+ *         description: Bad request
+ */
 router.put(
   "/:userId",
   authMiddleware,
@@ -179,7 +356,25 @@ router.put(
   }
 );
 
-// Delete a User
+/**
+ * @swagger
+ * /users/{userId}:
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     responses:
+ *       200:
+ *         description: The user was deleted
+ *       404:
+ *         description: User not found
+ */
 router.delete(
   "/:userId",
   authMiddleware,
